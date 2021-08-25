@@ -1,6 +1,8 @@
 import api_calling as api
 import constant as const
 import pandas as pd
+import numpy as np
+from datetime import date, timedelta
 
 # Create public variable to store state wise Confirmed', 'Recovered', 'Deaths' and 'Active' cases from dataframe
 df_state_wise_cases = api.df_state_wise_cases
@@ -10,6 +12,9 @@ df_state_with_code = api.df_state_with_code
 
 # create an interface to import state wise per day cases from API
 df_state_wise_per_day_cases = api.df_state_wise_per_day_cases
+
+#  create an interface for month wise Confirmed', 'Recovered', 'Deaths' and 'Active' cases dataframe
+df_month_wise_cases = api.df_month_wise_cases
 
 
 # Pass state name or 'India' into the function to get state wise or pan india cases
@@ -111,5 +116,95 @@ def get_ten_days_cases(state_code, last_ten_days):
     return cases
 
 
-sub = get_state
-print(sub())
+def get_month_wise_case(state, input_year):
+    month = []
+    confirmed_cases = []
+    recovered_cases = []
+    deceased_cases = []
+    last_confirmed_case = const.INT_ZERO
+    last_recovered_case = const.INT_ZERO
+    last_deceased_case = const.INT_ZERO
+
+    if state == const.COUNTRY_NAME:
+        state = const.COUNTRY_NAME
+    else:
+        state = get_full_state_name(state)
+
+    clean_date = (pd.to_datetime(df_month_wise_cases[const.STR_DATE].str[:-3]) - pd.Timedelta(days=1)).unique()
+    for i in range(len(clean_date)):
+        cleaned_date = pd.Timestamp(np.datetime64(clean_date[i]))
+        d = pd.to_datetime(cleaned_date).strftime(const.DATE_FORMAT_YMD)
+        year = int(pd.to_datetime(cleaned_date).strftime(const.STR_YEAR))
+        case = df_month_wise_cases.loc[(str(d) == df_month_wise_cases[const.STR_DATE]) & (
+                    state == df_month_wise_cases[const.STR_STATE])].iloc[:, const.INT_ZERO:const.INT_FIVE].to_dict(
+            const.STR_RECORDS)
+        if year == input_year:
+            if len(case) > const.INT_ZERO:
+                month.append(pd.to_datetime(case[const.INT_ZERO][const.STR_DATE]).strftime(const.STR_MMMM_YYYY))
+                if state != const.COUNTRY_NAME:
+                    confirmed_cases.append(case[const.INT_ZERO][const.CONFIRMED_CASES]
+                                           - last_confirmed_case / const.INT_10K)
+                    recovered_cases.append(case[const.INT_ZERO][const.RECOVERED_CASES]
+                                           - last_recovered_case / const.INT_10K)
+                    deceased_cases.append(case[const.INT_ZERO][const.DECEASED_CASES]
+                                          - last_deceased_case / const.INT_10K)
+
+                else:
+                    confirmed_cases.append(case[const.INT_ZERO][const.CONFIRMED_CASES]
+                                           - last_confirmed_case / const.INT_100K)
+                    recovered_cases.append(case[const.INT_ZERO][const.RECOVERED_CASES]
+                                           - last_recovered_case / const.INT_100K)
+                    deceased_cases.append(case[const.INT_ZERO][const.DECEASED_CASES]
+                                          - last_deceased_case / const.INT_100K)
+
+                last_confirmed_case = case[const.INT_ZERO][const.CONFIRMED_CASES]
+                last_recovered_case = case[const.INT_ZERO][const.RECOVERED_CASES]
+                last_deceased_case = case[const.INT_ZERO][const.DECEASED_CASES]
+
+            else:
+                month.append(pd.to_datetime(d).strftime(const.STR_MMMM_YYYY))
+                deceased_cases.append(const.INT_ZERO)
+                recovered_cases.append(const.INT_ZERO)
+                deceased_cases.append(const.INT_ZERO)
+
+    return {const.STR_MONTH: month,
+            const.CONFIRMED_CASES: deceased_cases,
+            const.RECOVERED_CASES: recovered_cases,
+            const.DECEASED_CASES: deceased_cases}
+
+
+# Combine all function to create dashboard data
+def create_dictionary(state):
+    case_data = get_case(state)
+    if state == const.COUNTRY_NAME:
+        state_code = const.STR_TT
+    else:
+        state_code = get_state_code(state)
+
+    last_ten_days = const.INT_TEN
+    start_day = const.INT_ONE
+    last_day = date.today() - timedelta(start_day)
+    daily_cases = get_state_wise_daily_case(state_code, last_day)
+    while daily_cases == const.INT_ZERO:
+        start_day += const.INT_ONE
+        last_ten_days += const.INT_ONE
+        last_day = date.today() - timedelta(start_day)
+        daily_cases = get_state_wise_daily_case(state_code, last_day)
+
+    last_day = date.today() - timedelta(last_ten_days)
+    ten_days_case = get_ten_days_cases(state_code, last_day)
+
+    get_daily_case = get_daily_cases(last_day)
+    get_states = get_state()
+
+    this_year = int(date.today().year)
+    current_year_state_wise_cases = get_month_wise_case(state, this_year)
+    last_year_state_wise_cases = get_month_wise_case(state, this_year-1)
+
+    return {'case_data': case_data,
+            'daily_cases': daily_cases,
+            'ten_days_case': ten_days_case,
+            'get_daily_case': get_daily_case,
+            'get_states': get_states,
+            'current_year_state_wise_cases': current_year_state_wise_cases,
+            'last_year_state_wise_cases': last_year_state_wise_cases}
