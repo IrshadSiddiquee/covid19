@@ -1,5 +1,5 @@
-import api_calling as api
-import constant as const
+import covid19dashboard.api_calling as api
+import covid19dashboard.constant as const
 import pandas as pd
 import numpy as np
 from datetime import date, timedelta
@@ -142,20 +142,20 @@ def get_month_wise_case(state, input_year):
             if len(case) > const.INT_ZERO:
                 month.append(pd.to_datetime(case[const.INT_ZERO][const.STR_DATE]).strftime(const.STR_MMMM_YYYY))
                 if state != const.COUNTRY_NAME:
-                    confirmed_cases.append(case[const.INT_ZERO][const.CONFIRMED_CASES]
-                                           - last_confirmed_case / const.INT_10K)
-                    recovered_cases.append(case[const.INT_ZERO][const.RECOVERED_CASES]
-                                           - last_recovered_case / const.INT_10K)
-                    deceased_cases.append(case[const.INT_ZERO][const.DECEASED_CASES]
-                                          - last_deceased_case / const.INT_10K)
+                    confirmed_cases.append((case[const.INT_ZERO][const.CONFIRMED_CASES]
+                                           - last_confirmed_case) / const.INT_10K)
+                    recovered_cases.append((case[const.INT_ZERO][const.RECOVERED_CASES]
+                                           - last_recovered_case) / const.INT_10K)
+                    deceased_cases.append((case[const.INT_ZERO][const.DECEASED_CASES]
+                                          - last_deceased_case) / const.INT_10K)
 
                 else:
-                    confirmed_cases.append(case[const.INT_ZERO][const.CONFIRMED_CASES]
-                                           - last_confirmed_case / const.INT_100K)
-                    recovered_cases.append(case[const.INT_ZERO][const.RECOVERED_CASES]
-                                           - last_recovered_case / const.INT_100K)
-                    deceased_cases.append(case[const.INT_ZERO][const.DECEASED_CASES]
-                                          - last_deceased_case / const.INT_100K)
+                    confirmed_cases.append((case[const.INT_ZERO][const.CONFIRMED_CASES]
+                                           - last_confirmed_case) / const.INT_100K)
+                    recovered_cases.append((case[const.INT_ZERO][const.RECOVERED_CASES]
+                                           - last_recovered_case) / const.INT_100K)
+                    deceased_cases.append((case[const.INT_ZERO][const.DECEASED_CASES]
+                                          - last_deceased_case) / const.INT_100K)
 
                 last_confirmed_case = case[const.INT_ZERO][const.CONFIRMED_CASES]
                 last_recovered_case = case[const.INT_ZERO][const.RECOVERED_CASES]
@@ -163,12 +163,12 @@ def get_month_wise_case(state, input_year):
 
             else:
                 month.append(pd.to_datetime(d).strftime(const.STR_MMMM_YYYY))
-                deceased_cases.append(const.INT_ZERO)
+                confirmed_cases.append(const.INT_ZERO)
                 recovered_cases.append(const.INT_ZERO)
                 deceased_cases.append(const.INT_ZERO)
 
     return {const.STR_MONTH: month,
-            const.CONFIRMED_CASES: deceased_cases,
+            const.CONFIRMED_CASES: confirmed_cases,
             const.RECOVERED_CASES: recovered_cases,
             const.DECEASED_CASES: deceased_cases}
 

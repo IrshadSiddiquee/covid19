@@ -1,5 +1,5 @@
 import pandas as pd
-import constant as const
+import covid19dashboard.constant as const
 import numpy as np
 from datetime import date, timedelta
 
