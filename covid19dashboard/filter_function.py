@@ -183,21 +183,21 @@ def create_dictionary(state):
 
     last_ten_days = const.INT_TEN
     start_day = const.INT_ONE
-    last_day = date.today() - timedelta(start_day)
+    last_day = date(2021, 10, 31) - timedelta(start_day)
     daily_cases = get_state_wise_daily_case(state_code, last_day)
     while daily_cases == const.INT_ZERO:
         start_day += const.INT_ONE
         last_ten_days += const.INT_ONE
-        last_day = date.today() - timedelta(start_day)
+        last_day = date(2021, 10, 31) - timedelta(start_day)
         daily_cases = get_state_wise_daily_case(state_code, last_day)
 
-    last_day = date.today() - timedelta(last_ten_days)
+    last_day = date(2021, 10, 31) - timedelta(last_ten_days)
     ten_days_case = get_ten_days_cases(state_code, last_day)
 
     get_daily_case = get_daily_cases(last_day)
     get_states = get_state()
 
-    this_year = int(date.today().year)
+    this_year = int(date(2021, 10, 31).year)
     current_year_state_wise_cases = get_month_wise_case(state, this_year)
     last_year_state_wise_cases = get_month_wise_case(state, this_year-1)
 
